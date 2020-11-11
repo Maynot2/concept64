@@ -28,67 +28,60 @@ char **splitstr(char *str)
 {
 	char **ary;
 	char *token;
-	char *del = " ";
-	int i;
+	char *del = " \t\r\n\v\f";
+	int i, j;
 
 	ary = malloc(sizeof(char *));
 	if (!ary)
 		return (NULL);
-	token = strtok(str, " ");
+	token = strtok(str, del);
 
 	i = 0;
 	while (token)
 	{
 		ary[i] = malloc(sizeof(char) * _strlen(token));
+		if (ary[i] == NULL)
+		{
+			for(j = 0; j < i; j++)
+				free(ary[j]);
+			free(ary);
+		}
 		ary[i] = token;
 		token = strtok(NULL, del);
 		i++;
 	}
-	ary[i] = malloc(100);
+	ary[i] = malloc(8);
 	ary[i] = NULL;
-
 	return ary;
-}
-
-void remove_new_line(char **buff, size_t c)
-{
-	size_t i;
-	char *cpbuff = strdup(buff[i]);
-	printf("cpbuff: %s\n", cpbuff);
-	printf("count: %zu\n", c);
-	for (i = 0; i < c; i++)
-	{
-		if (i > c - 1)
-			*buff[i] = '\0';
-		printf("%zu\n", i);
-		*buff[i] = cpbuff[i];
-	}
-	printf("i after: %zu", i);
-	//*buff[i] = '\0';
 }
 
 int main(void)
 {
 	char *buffer[1024];
 	ssize_t size = 1024;
-	size_t count;
+	int const TRUE = 1;
 	char **args;
-	char *args2[] = {"/bin/ls", NULL};
+	pid_t id;
 
-	// Come back here
-
-	write(STDOUT_FILENO, "$ ", 3);
-	count = getline(buffer, &size, stdin);
-	puts("here");
-	remove_new_line(buffer, count);
-	printf("buffer[0]: %s", buffer[0]);
-	args = splitstr(buffer[0]);
-
-	printf("arg1: %s", args[0]);
-	printf("arg2: %s", args[1]);
-	if (execve(args2[0], args2, NULL) == -1)
+	while (TRUE)
 	{
-		perror("Error\n");
+		id = fork();
+		if (id == 0)
+		{
+			if (write(STDOUT_FILENO, "$ ", 3) == -1)
+				perror("Write Error\n");
+			if (getline(buffer, &size, stdin) == -1)
+				perror("Read Error\n");
+
+			args = splitstr(buffer[0]);
+			
+			if (execve(args[0], args, NULL) == -1)
+				perror("Execution Error\n");
+		}
+		else
+		{
+			wait(NULL);
+		}
 	}
 
 	return (0);
