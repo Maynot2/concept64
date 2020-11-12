@@ -145,6 +145,33 @@ char *_strcat(char *dest, char *src)
 	return (dest);
 }
 
+char **formatpath(char **paths, char *arg)
+{
+	int i, j, k, lenpath, lenarg;
+	char **ary;
+
+	ary = malloc(sizeof(char *) * 100);
+	for (i = 0; paths[i] != NULL; i++)
+	{
+		lenpath = _strlen(paths[i]);
+		lenarg = _strlen(arg);
+
+		ary[i] = malloc(sizeof(char) * (lenpath+lenarg+1));
+		for (j = 0; j != lenpath; j++)
+		{
+			ary[i][j] = paths[i][j];
+		}
+		ary[i][j] = '/';
+		j++;
+		k = 0;
+		for (; arg[k] != '\0'; k++)
+		{
+			ary[i][j] = arg[k];
+			j++;
+		}
+	}
+	return (ary);
+}
 int main(int argc, char **argv, char **envp)
 {
 	char **paths;
@@ -160,14 +187,13 @@ int main(int argc, char **argv, char **envp)
 	}
 
 	paths = splitstr(findPATH(envp), "=:");
-
+	paths = formatpath(paths, argv[1]);
 	// add command at end of path to test if command is present in dir.
 	// /bin + /ls ----> stst("/bin/ls", &st) == 0
-
 	// loop over argv using counter i
 
 	j = 0;
-	while(paths[j])
+	while (paths[j])
 	{
 		if (stat(paths[j], &st) == 0)
 		{
