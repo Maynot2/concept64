@@ -24,21 +24,44 @@ int _strlen(char *s)
 	return (c);
 }
 
+char *hsh_readline(void)
+{
+	char *buffer[1] = {NULL};
+	ssize_t size = 1;
+
+	if (getline(buffer, &size, stdin) == -1) // read line
+		perror("Read Error\n");
+	return (buffer[0]);
+}
+
+void display_prompt(void)
+{
+	if (write(STDOUT_FILENO, "$ ", 3) == -1) // display prompt
+		perror("Write Error\n");
+
+}
 char **splitstr(char *str)
 {
 	char **ary;
 	char *token;
 	char *del = " \t\r\n\v\f";
 	int i, j;
+	int size = 8;
 
-	ary = malloc(sizeof(char *));
+	ary = malloc(sizeof(char *) * size);
 	if (!ary)
-		return (NULL);
+		exit(1);
+
 	token = strtok(str, del);
 
 	i = 0;
 	while (token)
 	{
+		if (i >= size - 1)
+		{
+			size += size;
+			ary = realloc(ary, sizeof(char *) * size);
+		}
 		ary[i] = malloc(sizeof(char) * _strlen(token));
 		if (ary[i] == NULL)
 		{
@@ -46,37 +69,39 @@ char **splitstr(char *str)
 				free(ary[j]);
 			free(ary);
 		}
+
 		ary[i] = token;
 		token = strtok(NULL, del);
 		i++;
 	}
-	ary[i] = malloc(8);
 	ary[i] = NULL;
 	return ary;
 }
 
+void hsh_exec_cmd(char **arguments)
+{
+	if (execve(arguments[0], arguments, NULL) == -1)
+		perror("Execution Error\n");
+}
+
 int main(void)
 {
-	char *buffer[1024];
-	ssize_t size = 1024;
-	int const TRUE = 1;
+	int status = 1;
 	char **args;
+	char *line;
 	pid_t id;
 
-	while (TRUE)
+	while (status)
 	{
 		id = fork();
 		if (id == 0)
 		{
-			if (write(STDOUT_FILENO, "$ ", 3) == -1)
-				perror("Write Error\n");
-			if (getline(buffer, &size, stdin) == -1)
-				perror("Read Error\n");
-
-			args = splitstr(buffer[0]);
-			
-			if (execve(args[0], args, NULL) == -1)
-				perror("Execution Error\n");
+			display_prompt();
+			line = hsh_readline();
+			args = splitstr(line);
+			hsh_exec_cmd(args);
+			free(line);
+			free(args);
 		}
 		else
 		{
