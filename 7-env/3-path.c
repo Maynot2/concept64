@@ -3,6 +3,13 @@
 #include <unistd.h>
 #include <string.h>
 
+typedef struct dir 
+{
+	char *str;
+	struct dir *next;
+
+} dir_t;
+
 int _strlen(char *s)
 {
 	int c = 0;
@@ -15,13 +22,6 @@ int _strlen(char *s)
 	return (c);
 }
 
-typedef struct dir 
-{
-	char *str;
-	struct dir *next;
-
-} dir_t;
-
 /**
  * add_node_end - Adds a node at the end of a linked list.
  * @head: A pointer to a pointer to the first element of the list.
@@ -32,55 +32,52 @@ typedef struct dir
  *
  */
 
-dir_t *add_node_end(dir_t **head, const char *str)
+void add_node_end(dir_t **head, const char *str)
 {
 	dir_t *new_tail;
 	dir_t *curr_node;
 	char *str_cp;
 
-	puts("ok2");
 	new_tail = malloc(sizeof(dir_t));
 	if (!new_tail)
-		return (NULL);
+	{
+		perror("Memory Allocation Error");
+		exit(1);
+	}
 
 	str_cp = strdup(str);
 	new_tail->str = str_cp;
 	new_tail->next = NULL;
-	puts("ok3");
 
 	if (*head == NULL)
 	{
-		puts("ok6");
 		*head = new_tail;
-		return (*head);
 	}
-	puts("ok4");
-	curr_node = *head;
-	while (curr_node->next)
-		curr_node = curr_node->next;
-	curr_node->next = new_tail;
-	puts("ok5");
-
-	return (new_tail);
+	else
+	{
+		curr_node = *head;
+		while (curr_node->next)
+			curr_node = curr_node->next;
+		curr_node->next = new_tail;
+	}
 }
 
 dir_t *splitdir(char *dirs)
 {
-	dir_t **head;
+	dir_t *head;
 	char *token;
 	char *delim = ":";
 
-	*head = NULL;
-
 	token = strtok(dirs, delim);
+	
+	head = NULL;
 
 	while(token)
 	{
-		add_node_end(head, token);
+		add_node_end(&head, token);
 		token = strtok(NULL, delim);
 	}
-	puts("OK");
-	return (*head);
+	return (head);
 }
 
 char *_getenv(const char *name)
@@ -115,7 +112,6 @@ void main(int argc, char **argv)
 	dir_t *head;
 	head = splitdir(_getenv("PATH"));
 
-	puts("OK1");
 	while (head)
 	{
 		printf("%s\n", head->str);
